@@ -1,9 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-only
 #
 # Copyright (C) 2010-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
 
 # boards missing since devicetree update
 #EASY50712 ARV3527P
@@ -65,9 +62,8 @@ define Device/Default
   FILESYSTEMS := squashfs
   SOC := $(DEFAULT_SOC)
   DEVICE_DTS = $$(SOC)_$(1)
-  SUPPORTED_DEVICES := $(subst _,$(comma),$(1))
   IMAGES := sysupgrade.bin
-  IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | append-metadata | check-size
+  IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | check-size | append-metadata
 endef
 
 define Device/NAND/xway
@@ -106,7 +102,7 @@ define Device/AVM
   KERNEL := kernel-bin | append-dtb | lzma | eva-image
   KERNEL_INITRAMFS := $$(KERNEL)
   IMAGE/sysupgrade.bin := append-kernel | pad-to 64k | append-avm-fakeroot | \
-	append-rootfs | pad-rootfs | append-metadata | check-size
+	append-rootfs | pad-rootfs | check-size | append-metadata
 endef
 
 ifeq ($(SUBTARGET),ase)
