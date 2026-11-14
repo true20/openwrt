@@ -30,8 +30,6 @@
 
 #if defined(CONFIG_DANUBE)
   #include "ifxmips_ptm_ppe_danube.h"
-#elif defined(CONFIG_AMAZON_SE)
-  #include "ifxmips_ptm_ppe_amazon_se.h"
 #elif defined(CONFIG_AR9)
   #include "ifxmips_ptm_ppe_ar9.h"
 #elif defined(CONFIG_VR9)
@@ -306,6 +304,12 @@
 #define DREG_B0_LADR                    PPE_REG_ADDR(0x0DA8)
 #define DREG_B1_LADR                    PPE_REG_ADDR(0x0DA9)
 
+static inline int
+ifx_drv_ver(char *buf, char *module, int major, int mid, int minor)
+{
+    return sprintf(buf, "Lantiq %s driver, version %d.%d.%d, (c) 2001-2013 Lantiq Deutschland GmbH\n",
+                    module, major, mid, minor);
+}
 
 
 #endif  //  IFXMIPS_PTM_PPE_COMMON_H

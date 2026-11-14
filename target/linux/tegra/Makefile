@@ -1,26 +1,25 @@
+# SPDX-License-Identifier: GPL-2.0-only
 #
-# Copyright (C) 2017-2019 Tomasz Maciej Nowak <tomek_n@o2.pl>
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2017-2019 Tomasz Maciej Nowak <tmn505@gmail.com>
+
 include $(TOPDIR)/rules.mk
 
 ARCH := arm
 BOARD := tegra
 BOARDNAME := NVIDIA Tegra
-FEATURES := audio boot-part display ext4 fpu gpio pci pcie rootfs-part rtc squashfs usb
+FEATURES := boot-part ext4 fpu gpio legacy-sdcard pci pcie rootfs-part rtc squashfs usb
 CPU_TYPE := cortex-a9
 CPU_SUBTYPE := vfpv3-d16
+SUBTARGETS := generic
 
-KERNEL_PATCHVER := 5.4
-KERNEL_TESTING_PATCHVER := 5.4
+KERNEL_PATCHVER := 6.18
 
 include $(INCLUDE_DIR)/target.mk
 
 KERNELNAME := zImage dtbs
 
-DEFAULT_PACKAGES += e2fsprogs mkf2fs partx-utils
+DEFAULT_PACKAGES += e2fsprogs mkf2fs
+DEFAULT_PACKAGES += video-support
 
 define Target/Description
 	Build firmware image for NVIDIA Tegra SoC devices.

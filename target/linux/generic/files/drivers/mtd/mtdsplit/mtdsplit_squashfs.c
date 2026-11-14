@@ -36,7 +36,7 @@ mtdsplit_parse_squashfs(struct mtd_info *master,
 	if (err)
 		return err;
 
-	parent_mtd = mtdpart_get_master(master);
+	parent_mtd = mtd_get_master(master);
 	part_offset = mtdpart_get_offset(master);
 
 	part = kzalloc(sizeof(*part), GFP_KERNEL);
@@ -62,11 +62,4 @@ static struct mtd_part_parser mtdsplit_squashfs_parser = {
 	.type = MTD_PARSER_TYPE_ROOTFS,
 };
 
-static int __init mtdsplit_squashfs_init(void)
-{
-	register_mtd_parser(&mtdsplit_squashfs_parser);
-
-	return 0;
-}
-
-subsys_initcall(mtdsplit_squashfs_init);
+module_mtd_part_parser(mtdsplit_squashfs_parser);

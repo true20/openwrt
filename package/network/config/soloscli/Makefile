@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=soloscli
 PKG_VERSION:=1.04
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=solos-pci-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/openadsl
@@ -26,7 +26,7 @@ define Package/soloscli
   CATEGORY:=Network
   TITLE:=Configuration utility for Solos ADSL2+ modems
   DEPENDS:=+kmod-solos-pci
-  URL:=http://sourceforge.net/projects/openadsl
+  URL:=https://sourceforge.net/projects/openadsl
 endef
 
 define Package/soloscli/description

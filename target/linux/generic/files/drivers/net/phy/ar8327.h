@@ -53,10 +53,10 @@
 #define   AR8327_PAD_RGMII_TXCLK_DELAY_EN	BIT(25)
 #define   AR8327_PAD_RGMII_EN			BIT(26)
 
-#define AR8327_REG_POWER_ON_STRIP		0x010
-#define   AR8327_POWER_ON_STRIP_POWER_ON_SEL	BIT(31)
-#define   AR8327_POWER_ON_STRIP_LED_OPEN_EN	BIT(24)
-#define   AR8327_POWER_ON_STRIP_SERDES_AEN	BIT(7)
+#define AR8327_REG_POWER_ON_STRAP		0x010
+#define   AR8327_POWER_ON_STRAP_POWER_ON_SEL	BIT(31)
+#define   AR8327_POWER_ON_STRAP_LED_OPEN_EN	BIT(24)
+#define   AR8327_POWER_ON_STRAP_SERDES_AEN	BIT(7)
 
 #define AR8327_REG_INT_STATUS0			0x020
 #define   AR8327_INT0_VT_DONE			BIT(20)
@@ -303,11 +303,42 @@ struct ar8327_led_entry {
 	unsigned shift;
 };
 
+enum ar8327_led_num {
+	AR8327_LED_PHY0_0 = 0,
+	AR8327_LED_PHY0_1,
+	AR8327_LED_PHY0_2,
+	AR8327_LED_PHY1_0,
+	AR8327_LED_PHY1_1,
+	AR8327_LED_PHY1_2,
+	AR8327_LED_PHY2_0,
+	AR8327_LED_PHY2_1,
+	AR8327_LED_PHY2_2,
+	AR8327_LED_PHY3_0,
+	AR8327_LED_PHY3_1,
+	AR8327_LED_PHY3_2,
+	AR8327_LED_PHY4_0,
+	AR8327_LED_PHY4_1,
+	AR8327_LED_PHY4_2,
+};
+
+enum ar8327_led_mode {
+       AR8327_LED_MODE_HW = 0,
+       AR8327_LED_MODE_SW,
+};
+
+struct ar8327_led_info {
+	const char *name;
+	const char *default_trigger;
+	bool active_low;
+	enum ar8327_led_num led_num;
+	enum ar8327_led_mode mode;
+	struct fwnode_handle *fwnode;
+};
+
 struct ar8327_led {
 	struct led_classdev cdev;
 	struct ar8xxx_priv *sw_priv;
 
-	char *name;
 	bool active_low;
 	u8 led_num;
 	enum ar8327_led_mode mode;
@@ -317,17 +348,19 @@ struct ar8327_led {
 	struct work_struct led_work;
 	bool enable_hw_mode;
 	enum ar8327_led_pattern pattern;
+	struct fwnode_handle *fwnode;
+	char name[];
 };
 
 struct ar8327_data {
 	u32 port0_status;
 	u32 port6_status;
 
-	struct ar8327_led **leds;
 	unsigned int num_leds;
 
-	/* all fields below are cleared on reset */
+	/* cleared on reset */
 	bool eee[AR8XXX_NUM_PHYS];
+	struct ar8327_led *leds[];
 };
 
 #endif

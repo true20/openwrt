@@ -1,14 +1,8 @@
-/dts-v1/;
-
 #include "mt7621.dtsi"
 
 / {
 	compatible = "mediatek,mt7621-eval-board", "mediatek,mt7621-soc";
 	model = "Mediatek MT7621 evaluation board";
-
-	chosen {
-		bootargs = "console=ttyS0,57600";
-	};
 };
 
 &nand {
@@ -37,12 +31,23 @@
 		partition@140000 {
 			label = "rootfs";
 			reg = <0x140000 0xec0000>;
+			linux,rootfs;
 		};
 	};
 };
 
 &sdhci {
 	status = "okay";
+};
+
+&gmac1 {
+	status = "okay";
+	label = "wan";
+	phy-handle = <&ethphy4>;
+};
+
+&ethphy4 {
+	/delete-property/ interrupts;
 };
 
 &switch0 {
@@ -66,17 +71,12 @@
 			status = "okay";
 			label = "lan4";
 		};
-
-		port@4 {
-			status = "okay";
-			label = "wan";
-		};
 	};
 };
 
 &state_default {
 	gpio {
-		groups = "i2c", "uart2", "uart3", "rgmii2", "sdhci";
+		groups = "i2c", "uart2", "uart3", "sdhci";
 		function = "gpio";
 	};
 };

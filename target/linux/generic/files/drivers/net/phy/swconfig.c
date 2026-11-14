@@ -24,7 +24,6 @@
 #include <linux/skbuff.h>
 #include <linux/switch.h>
 #include <linux/of.h>
-#include <linux/version.h>
 #include <uapi/linux/mii.h>
 
 #define SWCONFIG_DEVNAME	"switch%d"
@@ -591,16 +590,8 @@ swconfig_parse_ports(struct sk_buff *msg, struct nlattr *head,
 
 		port = &val->value.ports[val->len];
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		if (nla_parse_nested_deprecated(tb, SWITCH_PORT_ATTR_MAX, nla,
 				port_policy, NULL))
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0)
-		if (nla_parse_nested(tb, SWITCH_PORT_ATTR_MAX, nla,
-				port_policy, NULL))
-#else
-		if (nla_parse_nested(tb, SWITCH_PORT_ATTR_MAX, nla,
-				port_policy))
-#endif
 			return -EINVAL;
 
 		if (!tb[SWITCH_PORT_ID])
@@ -621,13 +612,7 @@ swconfig_parse_link(struct sk_buff *msg, struct nlattr *nla,
 {
 	struct nlattr *tb[SWITCH_LINK_ATTR_MAX + 1];
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 	if (nla_parse_nested_deprecated(tb, SWITCH_LINK_ATTR_MAX, nla, link_policy, NULL))
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0)
-	if (nla_parse_nested(tb, SWITCH_LINK_ATTR_MAX, nla, link_policy, NULL))
-#else
-	if (nla_parse_nested(tb, SWITCH_LINK_ATTR_MAX, nla, link_policy))
-#endif
 		return -EINVAL;
 
 	link->duplex = !!tb[SWITCH_LINK_FLAG_DUPLEX];
@@ -1005,136 +990,79 @@ swconfig_done(struct netlink_callback *cb)
 static struct genl_ops swconfig_ops[] = {
 	{
 		.cmd = SWITCH_CMD_LIST_GLOBAL,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.doit = swconfig_list_attrs,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_LIST_VLAN,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.doit = swconfig_list_attrs,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_LIST_PORT,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.doit = swconfig_list_attrs,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_GET_GLOBAL,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.doit = swconfig_get_attr,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_GET_VLAN,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.doit = swconfig_get_attr,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_GET_PORT,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.doit = swconfig_get_attr,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_SET_GLOBAL,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.flags = GENL_ADMIN_PERM,
 		.doit = swconfig_set_attr,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_SET_VLAN,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.flags = GENL_ADMIN_PERM,
 		.doit = swconfig_set_attr,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_SET_PORT,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.flags = GENL_ADMIN_PERM,
 		.doit = swconfig_set_attr,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 	},
 	{
 		.cmd = SWITCH_CMD_GET_SWITCH,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-#endif
 		.dumpit = swconfig_dump_switches,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-		.policy = switch_policy,
-#endif
 		.done = swconfig_done,
 	}
 };
 
 static struct genl_family switch_fam = {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
-	.id = GENL_ID_GENERATE,
-#endif
 	.name = "switch",
 	.hdrsize = 0,
 	.version = 1,
 	.maxattr = SWITCH_ATTR_MAX,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
 	.policy = switch_policy,
-#endif
 	.module = THIS_MODULE,
 	.ops = swconfig_ops,
 	.n_ops = ARRAY_SIZE(swconfig_ops),
+	.resv_start_op = SWITCH_CMD_SET_VLAN + 1,
 };
 
-#ifdef CONFIG_OF
-void
+static void
 of_switch_load_portmap(struct switch_dev *dev)
 {
-	struct device_node *port;
-
 	if (!dev->of_node)
 		return;
 
-	for_each_child_of_node(dev->of_node, port) {
+	for_each_child_of_node_scoped(dev->of_node, port) {
 		const __be32 *prop;
 		const char *segment;
 		int size, phys;
@@ -1156,19 +1084,37 @@ of_switch_load_portmap(struct switch_dev *dev)
 		}
 
 		phys = be32_to_cpup(prop++);
-		if ((phys < 0) | (phys >= dev->ports)) {
+		if (phys >= dev->ports) {
 			pr_err("%s: physical port index out of range\n",
 					port->name);
 			continue;
 		}
 
 		dev->portmap[phys].s = kstrdup(segment, GFP_KERNEL);
+		if (!dev->portmap[phys].s)
+			continue;
 		dev->portmap[phys].virt = be32_to_cpup(prop);
 		pr_debug("Found port: %s, physical: %d, virtual: %d\n",
 			segment, phys, dev->portmap[phys].virt);
 	}
 }
-#endif
+
+static void
+switch_free_portmap(struct switch_dev *dev)
+{
+	int i;
+
+	if (dev->portmap) {
+		for (i = 0; i < dev->ports; i++)
+			kfree(dev->portmap[i].s);
+
+		kfree(dev->portmap);
+		dev->portmap = NULL;
+	}
+
+	kfree(dev->portbuf);
+	dev->portbuf = NULL;
+}
 
 int
 register_switch(struct switch_dev *dev, struct net_device *netdev)
@@ -1185,7 +1131,8 @@ register_switch(struct switch_dev *dev, struct net_device *netdev)
 		if (!dev->alias)
 			dev->alias = netdev->name;
 	}
-	BUG_ON(!dev->alias);
+	if (WARN_ON(!dev->alias))
+		return -EINVAL;
 
 	/* Make sure swdev_id doesn't overflow */
 	if (swdev_id == INT_MAX) {
@@ -1193,12 +1140,10 @@ register_switch(struct switch_dev *dev, struct net_device *netdev)
 	}
 
 	if (dev->ports > 0) {
-		dev->portbuf = kzalloc(sizeof(struct switch_port) *
-				dev->ports, GFP_KERNEL);
+		dev->portbuf = kcalloc(dev->ports, sizeof(struct switch_port), GFP_KERNEL);
 		if (!dev->portbuf)
 			return -ENOMEM;
-		dev->portmap = kzalloc(sizeof(struct switch_portmap) *
-				dev->ports, GFP_KERNEL);
+		dev->portmap = kcalloc(dev->ports, sizeof(struct switch_portmap), GFP_KERNEL);
 		if (!dev->portmap) {
 			kfree(dev->portbuf);
 			return -ENOMEM;
@@ -1221,25 +1166,31 @@ register_switch(struct switch_dev *dev, struct net_device *netdev)
 
 	if (i == max_switches) {
 		swconfig_unlock();
+		switch_free_portmap(dev);
 		return -ENFILE;
 	}
 
-#ifdef CONFIG_OF
-	if (dev->ports)
+	if (IS_ENABLED(CONFIG_OF) && dev->ports)
 		of_switch_load_portmap(dev);
-#endif
 
 	/* fill device name */
 	snprintf(dev->devname, IFNAMSIZ, SWCONFIG_DEVNAME, i);
-
 	list_add_tail(&dev->dev_list, &swdevs);
 	swconfig_unlock();
 
 	err = swconfig_create_led_trigger(dev);
 	if (err)
-		return err;
+		goto unlink;
 
 	return 0;
+
+unlink:
+	swconfig_lock();
+	list_del(&dev->dev_list);
+	swconfig_unlock();
+	switch_free_portmap(dev);
+
+	return err;
 }
 EXPORT_SYMBOL_GPL(register_switch);
 
@@ -1247,12 +1198,12 @@ void
 unregister_switch(struct switch_dev *dev)
 {
 	swconfig_destroy_led_trigger(dev);
-	kfree(dev->portbuf);
 	mutex_lock(&dev->sw_mutex);
 	swconfig_lock();
 	list_del(&dev->dev_list);
 	swconfig_unlock();
 	mutex_unlock(&dev->sw_mutex);
+	switch_free_portmap(dev);
 }
 EXPORT_SYMBOL_GPL(unregister_switch);
 
@@ -1298,11 +1249,7 @@ swconfig_init(void)
 {
 	INIT_LIST_HEAD(&swdevs);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
-	return genl_register_family_with_ops(&switch_fam, swconfig_ops);
-#else
 	return genl_register_family(&switch_fam);
-#endif
 }
 
 static void __exit

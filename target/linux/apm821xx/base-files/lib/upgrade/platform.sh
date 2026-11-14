@@ -1,5 +1,3 @@
-#!/bin/sh
-
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
@@ -8,7 +6,7 @@ platform_check_image() {
 
 	case "$board" in
 	wd,mybooklive)
-		mbl_do_platform_check "$1"
+		legacy_sdcard_check_image "$1"
 		return $?;
 		;;
 	*)
@@ -22,7 +20,7 @@ platform_do_upgrade() {
 
 	case "$board" in
 	wd,mybooklive)
-		mbl_do_upgrade "$1"
+		legacy_sdcard_do_upgrade "$1"
 		;;
 	meraki,mr24|\
 	meraki,mx60|\
@@ -44,9 +42,6 @@ platform_copy_config() {
 	wd,mybooklive|\
 	wd,mybooklive-duo)
 		mbl_copy_config
-		;;
-
-	*)
 		;;
 	esac
 }

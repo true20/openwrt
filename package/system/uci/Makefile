@@ -9,20 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uci
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL=$(PROJECT_GIT)/project/uci.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2020-01-27
-PKG_SOURCE_VERSION:=e8d83732f9eb571dce71aa915ff38a072579610b
-PKG_MIRROR_HASH:=f39f82b71bc1072e4bcadaeb392d51055b2be72c41744bb97897a3ac63ce0805
+PKG_SOURCE_DATE:=2025-12-02
+PKG_SOURCE_VERSION:=66127cd76c5d0bd46d5a90302cc6110f53a4e2f8
+PKG_MIRROR_HASH:=ff23a9825aeac8da14a7142e985d598043c0287a463279f24863c580622bf18d
+PKG_ABI_VERSION:=20250120
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
-
-PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -35,7 +34,7 @@ define Package/libuci
   CATEGORY:=Libraries
   TITLE:=C library for the Unified Configuration Interface (UCI)
   DEPENDS:=+libubox
-  ABI_VERSION:=20130104
+  ABI_VERSION:=$(PKG_ABI_VERSION)
 endef
 
 define Package/uci
@@ -55,13 +54,14 @@ endef
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
 TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib
 
-CMAKE_OPTIONS = \
+CMAKE_OPTIONS += \
 	-DLUAPATH=/usr/lib/lua \
+	-DABIVERSION=$(PKG_ABI_VERSION) \
 	$(if $(DEBUG),-DUCI_DEBUG=ON)
 
 define Package/libuci/install
 	$(INSTALL_DIR) $(1)/lib
-	$(CP) $(PKG_BUILD_DIR)/libuci.so* $(1)/lib/
+	$(CP) $(PKG_BUILD_DIR)/libuci.so.* $(1)/lib/
 endef
 
 define Package/libuci-lua/install
@@ -84,6 +84,6 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/libucimap.a $(1)/usr/lib
 endef
 
-$(eval $(call BuildPackage,uci))
 $(eval $(call BuildPackage,libuci))
 $(eval $(call BuildPackage,libuci-lua))
+$(eval $(call BuildPackage,uci))

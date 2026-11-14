@@ -8,37 +8,39 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-c
-PKG_VERSION:=0.13.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.19
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-nodoc.tar.gz
-PKG_SOURCE_URL:=https://s3.amazonaws.com/json-c_releases/releases/
-PKG_HASH:=94a26340c0785fcff4f46ff38609cf84ebcd670df0c8efd75d039cc951d80132
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
-
-PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:json-c_project:json-c
-
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+PKG_SOURCE_URL:=https://github.com/json-c/json-c/releases/download/json-c-$(PKG_VERSION)-20260627
+PKG_HASH:=704927172443309a8efeb162060bb215548e1286e5568514007dd2cc35a0a164
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:json-c:json-c
+
+HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/cmake.mk
 
-TARGET_CFLAGS += $(FPIC) -Wno-implicit-fallthrough
-HOST_CFLAGS += -Wno-implicit-fallthrough
-HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
+CMAKE_HOST_OPTIONS += \
+	-DDISABLE_EXTRA_LIBS:BOOL=ON \
+	-DBUILD_SHARED_LIBS:BOOL=OFF \
+	-DBUILD_APPS:BOOL=OFF
+
+CMAKE_OPTIONS += \
+	-DDISABLE_EXTRA_LIBS:BOOL=ON \
+	-DBUILD_APPS:BOOL=OFF
 
 define Package/libjson-c
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=javascript object notation
   URL:=https://json-c.github.io/json-c/
-  ABI_VERSION:=4
+  ABI_VERSION:=5
 endef
 
 define Package/libjson-c/description
@@ -46,12 +48,9 @@ define Package/libjson-c/description
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/json-c $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjson-c.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/json-c.pc $(1)/usr/lib/pkgconfig/
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/json-c.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/json-c.pc
 endef
 
 define Package/libjson-c/install

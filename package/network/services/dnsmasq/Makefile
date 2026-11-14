@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsmasq
-PKG_UPSTREAM_VERSION:=2.81rc5
+PKG_UPSTREAM_VERSION:=2.93
 PKG_VERSION:=$(subst test,~~test,$(subst rc,~rc,$(PKG_UPSTREAM_VERSION)))
-PKG_RELEASE:=1
+PKG_RELEASE:=12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_UPSTREAM_VERSION).tar.xz
-PKG_SOURCE_URL:=http://thekelleys.org.uk/dnsmasq/release-candidates
-PKG_HASH:=d95439b0f0b3d540fd4a10fc150efa7478e0d70db8168d76550562dadf9fc433
+PKG_SOURCE_URL:=https://thekelleys.org.uk/dnsmasq/
+PKG_HASH:=0c00d4e5c97c8306e5fb932b348b34269c9c29a0e7df0e8e82958b407092bc19
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -24,12 +24,14 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_UPSTR
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 PKG_ASLR_PIE_REGULAR:=1
 PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_dhcp \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_dhcpv6 \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_dnssec \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_auth \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_ipset \
+	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_nftset \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_conntrack \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_noid \
 	CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_broken_rtc \
@@ -42,13 +44,14 @@ define Package/dnsmasq/Default
   CATEGORY:=Base system
   TITLE:=DNS and DHCP server
   URL:=http://www.thekelleys.org.uk/dnsmasq/
-  DEPENDS:=+libubus
+  DEPENDS:=+libubus +@BUSYBOX_CONFIG_PIDOF
   USERID:=dnsmasq=453:dnsmasq=453
 endef
 
 define Package/dnsmasq
 $(call Package/dnsmasq/Default)
   VARIANT:=nodhcpv6
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/dnsmasq-dhcpv6
@@ -61,10 +64,11 @@ endef
 
 define Package/dnsmasq-full
 $(call Package/dnsmasq/Default)
-  TITLE += (with DNSSEC, DHCPv6, Auth DNS, IPset, Conntrack, NO_ID enabled by default)
+  TITLE += (with DNSSEC, DHCPv6, Auth DNS, IPset, Nftset, Conntrack, NO_ID enabled by default)
   DEPENDS+=+PACKAGE_dnsmasq_full_dnssec:libnettle \
 	+PACKAGE_dnsmasq_full_ipset:kmod-ipt-ipset \
-	+PACKAGE_dnsmasq_full_conntrack:libnetfilter-conntrack
+	+PACKAGE_dnsmasq_full_conntrack:libnetfilter-conntrack \
+	+PACKAGE_dnsmasq_full_nftset:nftables-json
   VARIANT:=full
   PROVIDES:=dnsmasq
 endef
@@ -83,12 +87,13 @@ define Package/dnsmasq-full/description
 $(call Package/dnsmasq/description)
 
 This is a fully configurable variant with DHCPv4, DHCPv6, DNSSEC, Authoritative DNS
-and IPset, Conntrack support & NO_ID enabled by default.
+and nftset, Conntrack support & NO_ID enabled by default.
 endef
 
 define Package/dnsmasq/conffiles
 /etc/config/dhcp
 /etc/dnsmasq.conf
+/etc/dnsmasq.d/
 endef
 
 define Package/dnsmasq-full/config
@@ -108,6 +113,9 @@ define Package/dnsmasq-full/config
 		default y
 	config PACKAGE_dnsmasq_full_ipset
 		bool "Build with IPset support."
+		default n
+	config PACKAGE_dnsmasq_full_nftset
+		bool "Build with Nftset support."
 		default y
 	config PACKAGE_dnsmasq_full_conntrack
 		bool "Build with Conntrack support."
@@ -127,9 +135,6 @@ endef
 Package/dnsmasq-dhcpv6/conffiles = $(Package/dnsmasq/conffiles)
 Package/dnsmasq-full/conffiles = $(Package/dnsmasq/conffiles)
 
-TARGET_CFLAGS += -flto
-TARGET_LDFLAGS += -flto=jobserver
-
 COPTS = -DHAVE_UBUS -DHAVE_POLL_H \
 	$(if $(CONFIG_IPV6),,-DNO_IPV6)
 
@@ -143,6 +148,7 @@ ifeq ($(BUILD_VARIANT),full)
 		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_dnssec),-DHAVE_DNSSEC) \
 		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_auth),,-DNO_AUTH) \
 		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_ipset),,-DNO_IPSET) \
+		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_nftset),-DHAVE_NFTSET,) \
 		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_conntrack),-DHAVE_CONNTRACK,) \
 		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_noid),-DNO_ID,) \
 		$(if $(CONFIG_PACKAGE_dnsmasq_$(BUILD_VARIANT)_broken_rtc),-DHAVE_BROKEN_RTC) \
@@ -171,7 +177,7 @@ define Package/dnsmasq/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/neigh
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/ntp
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tftp
-	$(INSTALL_CONF) ./files/dnsmasqsec.hotplug $(1)/etc/hotplug.d/ntp/25-dnsmasqsec
+	$(INSTALL_DATA) ./files/dnsmasqsec.hotplug $(1)/etc/hotplug.d/ntp/25-dnsmasqsec
 	$(INSTALL_DIR) $(1)/usr/share/dnsmasq
 	$(INSTALL_CONF) ./files/dhcpbogushostname.conf $(1)/usr/share/dnsmasq/
 	$(INSTALL_CONF) ./files/rfc6761.conf $(1)/usr/share/dnsmasq/
@@ -179,8 +185,11 @@ define Package/dnsmasq/install
 	$(INSTALL_BIN) ./files/dhcp-script.sh $(1)/usr/lib/dnsmasq/dhcp-script.sh
 	$(INSTALL_DIR) $(1)/usr/share/acl.d
 	$(INSTALL_DATA) ./files/dnsmasq_acl.json $(1)/usr/share/acl.d/
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DATA) ./files/dnsmasq.capabilities $(1)/etc/capabilities/dnsmasq.json
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/50-dnsmasq-migrate-resolv-conf-auto.sh $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/50-dnsmasq-migrate-ipset.sh $(1)/etc/uci-defaults
 endef
 
 Package/dnsmasq-dhcpv6/install = $(Package/dnsmasq/install)

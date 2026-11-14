@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
-/dts-v1/;
+
+#include "ar9344.dtsi"
 
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
-
-#include "ar9344.dtsi"
+#include <dt-bindings/leds/common.h>
 
 / {
 	compatible = "iodata,etg3-r", "qca,ar9344";
@@ -21,13 +21,14 @@
 		compatible = "gpio-leds";
 
 		led_power: power {
-			label = "etg3-r:green:power";
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_GREEN>;
 			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
 			default-state = "on";
 		};
 
 		notification {
-			label = "etg3-r:green:notification";
+			label = "green:notification";
 			gpios = <&gpio 14 GPIO_ACTIVE_LOW>;
 		};
 	};
@@ -51,8 +52,6 @@
 &spi {
 	status = "okay";
 
-	num-cs = <1>;
-
 	flash@0 {
 		compatible = "jedec,spi-nor";
 		reg = <0>;
@@ -72,6 +71,14 @@
 			partition@40000 {
 				label = "u-boot-env";
 				reg = <0x040000 0x010000>;
+
+				nvmem-layout {
+					compatible = "u-boot,env";
+
+					macaddr_uboot_ethaddr: ethaddr {
+						#nvmem-cell-cells = <1>;
+					};
+				};
 			};
 
 			partition@50000 {
@@ -104,9 +111,9 @@
 &mdio0 {
 	status = "okay";
 
-	phy0: ethernet-phy@0 {
-		reg = <0>;
-		phy-mode = "rgmii";
+	ethernet-switch@10 {
+		compatible = "qca,ar8327";
+		reg = <0x10>;
 
 		qca,ar8327-initvals = <
 			0x04 0x07600000 /* PORT0 PAD MODE CTRL */
@@ -125,7 +132,9 @@
 	pll-data = <0x0e000000 0x00000101 0x00001616>;
 
 	phy-mode = "rgmii";
-	phy-handle = <&phy0>;
+
+	nvmem-cells = <&macaddr_uboot_ethaddr 0>;
+	nvmem-cell-names = "mac-address";
 
 	gmac-config {
 		device = <&gmac>;
@@ -134,8 +143,9 @@
 		rxd-delay = <3>;
 		rxdv-delay = <3>;
 	};
-};
 
-&uart {
-	status = "okay";
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
 };
